@@ -67,7 +67,7 @@ def combined_roidb(imdb_names):                           # 获取imdb和roidb(�
         roidb = get_training_roidb(imdb)                  # 从 imdb 获得 roidb
         return roidb
 
-    roidbs = [get_roidb(s) for s in imdb_names.split('+')]  #获取所有的roidb
+    roidbs = [get_roidb(s) for s in imdb_names.split('+')]  # 获取所有的roidb
     roidb = roidbs[0]
     if len(roidbs) > 1:             #训练集多于一个的情况(不常用)
         for r in roidbs[1:]:
