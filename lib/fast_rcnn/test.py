@@ -287,7 +287,7 @@ def test_net(net, imdb, max_per_image=100, thresh=0.05, vis=False):
             cls_boxes = boxes[inds, j*4:(j+1)*4]
             cls_dets = np.hstack((cls_boxes, cls_scores[:, np.newaxis])) \
                 .astype(np.float32, copy=False)
-            keep = nms(cls_dets, cfg.TEST.NMS)
+            keep = nms(cls_dets, cfg.TEST.NMS)  # 进行非最大值抑制(NMS)
             cls_dets = cls_dets[keep, :]
             if vis:
                 vis_detections(im, imdb.classes[j], cls_dets)
