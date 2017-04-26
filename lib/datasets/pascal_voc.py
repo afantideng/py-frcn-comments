@@ -105,10 +105,10 @@ class pascal_voc(imdb):
 
         *** roidb 是一个 list, 装着所有图片的信息；每一张图片用一个dict存放，结构如下：***
         {'boxes' : boxes,
-                'gt_classes': gt_classes,
-                'gt_overlaps' : overlaps,
-                'flipped' : False,
-                'seg_areas' : seg_areas}
+         'gt_classes': gt_classes,
+         'gt_overlaps' : overlaps,
+         'flipped' : False,
+         'seg_areas' : seg_areas}
         其中的每一项都存放着该张图片里所有物体的该类信息(具体见下面　_load_pascal_annotation(self, index))
         """
         #如果有现成的.pkl文件,则直接加载
@@ -187,7 +187,7 @@ class pascal_voc(imdb):
     # -- 没啥用 --
     """该函数用于加载 selective search 的结果(该结果以.mat文件保存)"""
     def _load_selective_search_roidb(self, gt_roidb):
-        filename = os.path.abspath(os.path.join(cfg.DATA_DIR,                #这里加载了一个.mat文件
+        filename = os.path.abspath(os.path.join(cfg.DATA_DIR,                # 这里加载了一个.mat文件
                                                 'selective_search_data',
                                                 self.name + '.mat'))
         assert os.path.exists(filename), \
@@ -207,7 +207,7 @@ class pascal_voc(imdb):
 
     """
     输入:给定图片的index(对一张图片的操作)
-    输出:包围框boxes(num_objs*4),类别标签gt_classes(1*num_objs),overlaps(),seg_areas
+    输出:包围框boxes(num_objs*4), 类别标签gt_classes(1*num_objs), overlaps(), seg_areas
     调用:**被gt_roidb(self)调用**
     """
     def _load_pascal_annotation(self, index):
@@ -227,11 +227,11 @@ class pascal_voc(imdb):
             objs = non_diff_objs
         num_objs = len(objs)
 
-        boxes = np.zeros((num_objs, 4), dtype=np.uint16)                     #存放所有物体的包围框
-        gt_classes = np.zeros((num_objs), dtype=np.int32)                    #存放所有物体的所属类别
-        overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)  #以 N×num_class 形式展示一个物体所属类别（匹配的地方置1）
+        boxes = np.zeros((num_objs, 4), dtype=np.uint16)                     # 存放所有物体的包围框 (num_objs, 4)
+        gt_classes = np.zeros((num_objs), dtype=np.int32)                    # 存放所有物体的所属类别 (num_objs, 1)
+        overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)  # 以 (num_objs, num_class) 形式展示一个物体所属类别（匹配的地方置1）
         # "Seg" area for pascal is just the box area
-        seg_areas = np.zeros((num_objs), dtype=np.float32)                   #存放每一个box的面积
+        seg_areas = np.zeros((num_objs), dtype=np.float32)                   # 存放每一个box的面积 (nums_objs, 1)
 
         # Load object bounding boxes into a data frame.
         for ix, obj in enumerate(objs):
@@ -241,19 +241,19 @@ class pascal_voc(imdb):
             y1 = float(bbox.find('ymin').text) - 1
             x2 = float(bbox.find('xmax').text) - 1
             y2 = float(bbox.find('ymax').text) - 1
-            cls = self._class_to_ind[obj.find('name').text.lower().strip()]   #获得与类别名相对应的编号
+            cls = self._class_to_ind[obj.find('name').text.lower().strip()]   # 获得与类别名相对应的编号
             boxes[ix, :] = [x1, y1, x2, y2]
             gt_classes[ix] = cls
             overlaps[ix, cls] = 1.0
-            seg_areas[ix] = (x2 - x1 + 1) * (y2 - y1 + 1)                     #获得所有框框的面积
+            seg_areas[ix] = (x2 - x1 + 1) * (y2 - y1 + 1)                     # 获得所有框框的面积
 
-        overlaps = scipy.sparse.csr_matrix(overlaps)                          #---??存储为稀疏矩阵??---
+        overlaps = scipy.sparse.csr_matrix(overlaps)                          # ---??存储为稀疏矩阵??---
 
-        return {'boxes' : boxes,            # N x 4
-                'gt_classes': gt_classes,   # N x 1 (1 x N)
-                'gt_overlaps' : overlaps,   # N x num_classes
+        return {'boxes' : boxes,            # (num_objs, 4)
+                'gt_classes': gt_classes,   # (num_objs, 1)
+                'gt_overlaps' : overlaps,   # (num_objs, num_class)
                 'flipped' : False,
-                'seg_areas' : seg_areas}    # N x 1 (1 x N)
+                'seg_areas' : seg_areas}    # (num_objs, 1)
 
     def _get_comp_id(self):
         comp_id = (self._comp_id + '_' + self._salt if self.config['use_salt']

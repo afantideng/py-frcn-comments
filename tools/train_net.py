@@ -103,6 +103,19 @@ if __name__ == '__main__':
     caffe.set_device(args.gpu_id)
 
     # ----------- 获取imdb和roidb-----------
+    '''
+    最终的 roidb 中的每一个 dict(其实就只有一个) 包含的项目(key)有：
+      {'boxes' : boxes,             (num_objs, 4)
+       'gt_classes': gt_classes,    (num_objs, 1)
+       'gt_overlaps' : overlaps,    (num_objs, num_class)
+       'flipped' : False,
+       'seg_areas' : seg_areas     (num_objs, 1)
+       'width'
+       'height'
+       'max_classes'                (1, num_objs) 　
+       'max_overlaps'               (1, num_objs)
+       }
+    '''
     imdb, roidb = combined_roidb(args.imdb_name)   # 完成所有 roidb 的获取和添加额外信息的工作
     print '{:d} roidb entries'.format(len(roidb))
 

@@ -23,11 +23,11 @@ def get_minibatch(roidb, num_classes):
     num_images = len(roidb) #其实roidb里就只装了1张
     # Sample random scales to use for each image in this batch
     # 给roidb中的图像随机分配缩放比例，从而加入图像的多尺度信息
-    random_scale_inds = npr.randint(0, high=len(cfg.TRAIN.SCALES),  #生成num_images个0~600之间的随机整数,
-                                size=num_images)                    #用于给这个mini_batch中的所有图片进行缩放
+    random_scale_inds = npr.randint(0, high=len(cfg.TRAIN.SCALES),  # 生成num_images(1)个0~600之间的随机整数,
+                                size=num_images)                    # 用于给这个mini_batch中的所有图片进行缩放
     assert(cfg.TRAIN.BATCH_SIZE % num_images == 0), \
         'num_images ({}) must divide BATCH_SIZE ({})'. \
-        format(num_images, cfg.TRAIN.BATCH_SIZE)                    #cfg.TRAIN.BATCH_SIZE是指每一个mini_batch的有效roi总数
+        format(num_images, cfg.TRAIN.BATCH_SIZE)                    # cfg.TRAIN.BATCH_SIZE是指每一个mini_batch的有效roi总数
     rois_per_image = cfg.TRAIN.BATCH_SIZE / num_images
     fg_rois_per_image = np.round(cfg.TRAIN.FG_FRACTION * rois_per_image)
 
@@ -35,27 +35,40 @@ def get_minibatch(roidb, num_classes):
     """
     Get the input image blob, formatted for caffe
     将给定的roidb经过预处理（resize以及resize的scale），
-    然后再利用im_list_to_blob函数来将图像转换成caffe支持的数据结构，即 N * C * H * W的四维结构
+    然后再利用im_list_to_blob函数来将图像转换成caffe支持的数据结构，
+    即 N * C * H * W 的四维结构
     """
-    im_blob, im_scales = _get_image_blob(roidb, random_scale_inds) #!!!---***此处得到的im_blob开始包含真实的图片***---!!!
+    im_blob, im_scales = _get_image_blob(roidb, random_scale_inds)   # ---- 此处得到的im_blob开始包含真实的图片 ----
 
 
     """
-    最终的返回，字典。其中最主要的部分是‘data’,对应将roidb转换后得到的im_blob，其他的根据各个阶段，还会加入‘gt_boxes’、
-    ‘im_info’、‘rois’、‘labels’、‘bbox_targets’、‘bbox_inside_weights’、‘bbox_outside_weights’的信息.
+    最终的返回，字典。其中最主要的部分是‘data’,对应将roidb转换后得到的
+    im_blob，其他的根据各个阶段，还会加入‘gt_boxes’、‘im_info’等信息
+    * 注意：blobs 里面只包含一张图片的信息
     """
     blobs = {'data': im_blob}
 
-    """--- !!!!!!!!-----以下部分严格要求输入图片张数为"1" ----!!!!!!!!!---"""
+    # ----- 以下部分严格要求输入图片张数为 "1" -----
     if cfg.TRAIN.HAS_RPN:
         assert len(im_scales) == 1, "Single batch only"
         assert len(roidb) == 1, "Single batch only"
+
         # gt boxes: (x1, y1, x2, y2, cls)
+        # roidb 事实上只包含一张图片的信息，所以是[0]
         gt_inds = np.where(roidb[0]['gt_classes'] != 0)[0]
+
+        # 尺寸：(gt_num, 5)
         gt_boxes = np.empty((len(gt_inds), 5), dtype=np.float32)
+
+        # 坐标值乘上缩放尺寸后放入 gt_box 中
         gt_boxes[:, 0:4] = roidb[0]['boxes'][gt_inds, :] * im_scales[0]
+        # 放入类别标签
         gt_boxes[:, 4] = roidb[0]['gt_classes'][gt_inds]
+
+        # 将 gt_boxes 装入 blobs 中
         blobs['gt_boxes'] = gt_boxes
+
+        #
         blobs['im_info'] = np.array(
             [[im_blob.shape[2], im_blob.shape[3], im_scales[0]]],
             dtype=np.float32)
@@ -158,7 +171,7 @@ def _get_image_blob(roidb, scale_inds):
         im = cv2.imread(roidb[i]['image'])                    #----读入图片----
         if roidb[i]['flipped']:
             im = im[:, ::-1, :]#????????????图片翻转
-        target_size = cfg.TRAIN.SCALES[scale_inds[i]]         #-----???????-----
+        target_size = cfg.TRAIN.SCALES[scale_inds[i]]         #----- 其实就是600 -----
 
         # prep_im_for_blob 函数的功能是获取经过resize的图像以及缩放的比例
         im, im_scale = prep_im_for_blob(im, cfg.PIXEL_MEANS, target_size,

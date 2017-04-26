@@ -23,7 +23,7 @@ class RoIDataLayer(caffe.Layer):
     """Fast R-CNN data layer used for training."""
 
     """
-    ---***在 set_roidb(self, roidb)中被调用***---
+    ---***在 set_roidb(self, roidb) 中被调用***---
     """
     def _shuffle_roidb_inds(self):
         """Randomly permute the training roidb."""
@@ -67,13 +67,14 @@ class RoIDataLayer(caffe.Layer):
         if cfg.TRAIN.USE_PREFETCH:
             return self._blob_queue.get()
         else:
-            db_inds = self._get_next_minibatch_inds()               #其实就只有1张
-            minibatch_db = [self._roidb[i] for i in db_inds]        #从 self._roidb 中取出下一个mini_batch所包含图片的 roidb
-            return get_minibatch(minibatch_db, self._num_classes)   #与数据相联系的关键,该函数来自roi_data_layer.minibatch
+            db_inds = self._get_next_minibatch_inds()               # 其实就只有1张
+            minibatch_db = [self._roidb[i] for i in db_inds]        # 从 self._roidb 中取出下一个mini_batch所包含图片的 roidb
+            return get_minibatch(minibatch_db, self._num_classes)   # 与数据相联系的关键,该函数来自roi_data_layer.minibatch
                                                                     # ---- 数据最终来源于self._roidb ---
     """
     ---***该函数在train.py的SolverWrapper里加载roidb时被调用***---
     self.solver.net.layers[0].set_roidb(roidb)
+    ---- 是联系 RoIDataLayer.roidb 与 imdb.roidb 的关键 ----
     """
     def set_roidb(self, roidb):
         """Set the roidb to be used by this layer during training."""
@@ -101,11 +102,12 @@ class RoIDataLayer(caffe.Layer):
 
         self._num_classes = layer_params['num_classes']
 
-        self._name_to_top_map = {}                                   #一个dict,存放top里名字和编号的对应关系('data','im_info','gt_boxes')
+        # 一个dict,存放 top 里名字和编号的对应关系 ('data','im_info','gt_boxes')
+        self._name_to_top_map = {}
 
         # data blob: holds a batch of N images, each with 3 channels
         idx = 0
-        top[idx].reshape(cfg.TRAIN.IMS_PER_BATCH, 3,                 #top[0]存放数据,尺寸为N*C*H*W
+        top[idx].reshape(cfg.TRAIN.IMS_PER_BATCH, 3,                 # top[0] 存放数据,尺寸为N*C*H*W
             max(cfg.TRAIN.SCALES), cfg.TRAIN.MAX_SIZE)
         self._name_to_top_map['data'] = idx
         idx += 1
@@ -113,11 +115,11 @@ class RoIDataLayer(caffe.Layer):
         #如果使用RPN
         if cfg.TRAIN.HAS_RPN:
             top[idx].reshape(1, 3)
-            self._name_to_top_map['im_info'] = idx                   #top[1]存放im_info
+            self._name_to_top_map['im_info'] = idx                   # top[1] 存放 im_info
             idx += 1
 
             top[idx].reshape(1, 4)
-            self._name_to_top_map['gt_boxes'] = idx                  #top[2]存放gt_boxes
+            self._name_to_top_map['gt_boxes'] = idx                  # top[2] 存放 gt_boxes
             idx += 1
         else: #如果不使用RPN (在分步训练时会用到)
             # rois blob: holds R regions of interest, each is a 5-tuple
@@ -157,10 +159,15 @@ class RoIDataLayer(caffe.Layer):
         """
         Get blobs and copy them into this layer's top blob vector.
         获取blob并将其载入top
+        blobs 为一个字典，包含一张图片的信息，字典的键值有：
+           im_blob： (1, c(3), h, w)
+           gt_boxes：(gt_num, 5) 包含坐标和类别标签
+           im_info: (1, 3) 包含这张图片的 w, h, scale
         """
-        blobs = self._get_next_minibatch()                             #获得下一个mini_batch的blobs
+        blobs = self._get_next_minibatch()                             # 获得下一个mini_batch的blobs
 
-        for blob_name, blob in blobs.iteritems():           #----把blob中的data,im_info和gt_box装载到top里进行输出----
+        # ---- 把 blobs 中的 im_blob, im_info 和 gt_box 装载到 top 里进行输出 ----
+        for blob_name, blob in blobs.iteritems():
             top_ind = self._name_to_top_map[blob_name]
             # Reshape net's input blobs
             top[top_ind].reshape(*(blob.shape))

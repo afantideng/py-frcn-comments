@@ -35,19 +35,20 @@ class SolverWrapper(object):                                                #控
             # fixed statistics to compute a priori
             assert cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED
 
+        # 给 roidb 里的每一个 dict 添加了　bbox_targets 这项
         if cfg.TRAIN.BBOX_REG:
             print 'Computing bounding-box regression targets...'
             self.bbox_means, self.bbox_stds = \
                     rdl_roidb.add_bbox_regression_targets(roidb)
             print 'done'
 
-        self.solver = caffe.SGDSolver(solver_prototxt)                      #加载solver文件
+        self.solver = caffe.SGDSolver(solver_prototxt)                      # 加载solver文件
         if pretrained_model is not None:
             print ('Loading pretrained model '
                    'weights from {:s}').format(pretrained_model)
-            self.solver.net.copy_from(pretrained_model)                     #加载预训练模型
+            self.solver.net.copy_from(pretrained_model)                     # 加载预训练模型
 
-        self.solver_param = caffe_pb2.SolverParameter()                     #读取proto参数?????
+        self.solver_param = caffe_pb2.SolverParameter()                     # 读取proto参数?????
         with open(solver_prototxt, 'rt') as f:
             pb2.text_format.Merge(f.read(), self.solver_param)
 

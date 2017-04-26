@@ -56,6 +56,7 @@ class imdb(object):
         method = eval('self.' + method + '_roidb')
         self.roidb_handler = method
 
+    # 获取 imdb.roidb
     @property
     def roidb(self):
         # A roidb is a list of dictionaries, each with the following keys:
