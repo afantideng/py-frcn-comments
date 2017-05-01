@@ -157,8 +157,8 @@ def _sample_rois(roidb, fg_rois_per_image, rois_per_image, num_classes):
     return labels, overlaps, rois, bbox_targets, bbox_inside_weights
 
 """
-输入:一些图片的roidb,装有每张图片的缩放尺寸的tuple
-输出:包含真实图片的im_blob
+输入:一些图片的roidb,装有每张图片的缩放尺寸的 tuple
+输出:包含真实图片的 im_blob
 """
 def _get_image_blob(roidb, scale_inds):
     """Builds an input blob from the images in the roidb at the specified

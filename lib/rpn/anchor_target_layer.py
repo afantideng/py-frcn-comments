@@ -80,9 +80,9 @@ class AnchorTargetLayer(caffe.Layer):
         # map of shape (..., H, W)
         height, width = bottom[0].data.shape[-2:]                  # rpn_cls_score 输出 map 的宽和高 w,ｈ
         # GT boxes (x1, y1, x2, y2, label)
-        gt_boxes = bottom[1].data                                  # gt_bbox
+        gt_boxes = bottom[1].data                                  # gt_bbox (gt_num, 5)
         # im_info
-        im_info = bottom[2].data[0, :]                             # im_info
+        im_info = bottom[2].data[0, :]                             # im_info (1, 3)
 
         if DEBUG:
             print ''
@@ -204,16 +204,20 @@ class AnchorTargetLayer(caffe.Layer):
         bbox_targets = np.zeros((len(inds_inside), 4), dtype=np.float32)          # 尺寸：(anchors_num, 4)
         bbox_targets = _compute_targets(anchors, gt_boxes[argmax_overlaps, :])
 
-        # -- inside weights --
+
+        # -- inside weights 联合损失函数中只取正样本的选择系数 [u >= 1]--
         bbox_inside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)   # 尺寸：(anchors_num, 4)
         # 正样本为（1,1,1,1) 负样本为 (0,0,0,0)
         bbox_inside_weights[labels == 1, :] = np.array(cfg.TRAIN.RPN_BBOX_INSIDE_WEIGHTS) 
 
-        # -- outside weights 为了归一化 --
+
+        # -- outside weights 存放归一化系数 1 / N --
         bbox_outside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)  # 尺寸：(anchors_num, 4)
-        if cfg.TRAIN.RPN_POSITIVE_WEIGHT < 0:
+        if cfg.TRAIN.RPN_POSITIVE_WEIGHT < 0: # 默认为 -1.0
             # uniform weighting of examples (given non-uniform sampling)
-            num_examples = np.sum(labels >= 0)   # 所有标签为 1 的 anchor 的总个数
+            # 所有为正负样本（标签为0或1）的 anchor 的总个数
+            num_examples = np.sum(labels >= 0)
+            # 用于归一化的 1 / N
             positive_weights = np.ones((1, 4)) * 1.0 / num_examples
             negative_weights = np.ones((1, 4)) * 1.0 / num_examples
         else:
@@ -311,7 +315,7 @@ def _unmap(data, count, inds, fill=0):
         ret.fill(fill)
         ret[inds] = data
     else:
-        ret = np.empty((count, ) + data.shape[1:], dtype=np.float32)  # ret尺寸: total_anchors x 4
+        ret = np.empty((count, ) + data.shape[1:], dtype=np.float32)  # ret尺寸: (total_anchors, 4)
         ret.fill(fill)
         ret[inds, :] = data                                           # 将数据按照原来的地方放回去
     return ret

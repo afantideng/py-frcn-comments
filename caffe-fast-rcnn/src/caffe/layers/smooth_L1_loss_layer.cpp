@@ -10,9 +10,9 @@
 /*
 *bottom[0]:预测坐标，对应于ti
 *bottom[1]:target坐标，对应于ti*
-*bottom[2]:inside_weights，有物体(fg)时为1，否则为0，对应于下图的pi*
-*bottom[3]:outside_weights，没有前景（fg）也没有后景（bg）的为0，其他为1/（bg+fg），
-*          对应于加号右边的系数部分。
+*bottom[2]:inside_weights，有物体(fg)时为1，否则为0
+*bottom[3]:outside_weights，没有前景（fg）也没有背景（bg）的为0，其他为1/（bg+fg），
+*          对应于加号左边的系数部分。
 */
 
 namespace caffe {
@@ -49,6 +49,7 @@ void SmoothL1LossLayer<Dtype>::Reshape(
   errors_.Reshape(bottom[0]->num(), bottom[0]->channels(),
       bottom[0]->height(), bottom[0]->width());
   // vector of ones used to sum
+  // 用于加和的值全为 1 的 blob
   ones_.Reshape(bottom[0]->num(), bottom[0]->channels(),
       bottom[0]->height(), bottom[0]->width());
   for (int i = 0; i < bottom[0]->count(); ++i) {

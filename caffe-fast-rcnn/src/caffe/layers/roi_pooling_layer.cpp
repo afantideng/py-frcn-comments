@@ -24,7 +24,8 @@ void ROIPoolingLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       << "pooled_h must be > 0";
   CHECK_GT(roi_pool_param.pooled_w(), 0)
       << "pooled_w must be > 0";
-  pooled_height_ = roi_pool_param.pooled_h();                       //pooling 以后的尺寸指标
+  //pooling 以后的 宽 (width) 和 高 (height)
+  pooled_height_ = roi_pool_param.pooled_h();                       
   pooled_width_ = roi_pool_param.pooled_w();
   spatial_scale_ = roi_pool_param.spatial_scale();
   LOG(INFO) << "Spatial scale: " << spatial_scale_;
@@ -33,11 +34,15 @@ void ROIPoolingLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void ROIPoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-  channels_ = bottom[0]->channels();                                 //获得 feature map 的各项尺寸指标
+  //获得输入 feature map 的尺寸信息
+  channels_ = bottom[0]->channels();                                 
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();
+
+  // top[0]的结构: (roi_num, c, pooled_h, pooled_w)
   top[0]->Reshape(bottom[1]->num(), channels_, pooled_height_,
       pooled_width_);
+  // 存放 pooling 后各个点在原特征图中的坐标值
   max_idx_.Reshape(bottom[1]->num(), channels_, pooled_height_,
       pooled_width_);
 }

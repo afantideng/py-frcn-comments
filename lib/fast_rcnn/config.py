@@ -96,6 +96,7 @@ __C.TRAIN.PROPOSAL_METHOD = 'selective_search'
 # Make minibatches from images that have similar aspect ratios (i.e. both
 # tall and thin or both short and wide) in order to avoid wasting computation
 # on zero-padding.
+# 把 aspect ratios 相近的图片放在一起搞
 __C.TRAIN.ASPECT_GROUPING = True
 
 # Use RPN to detect objects
