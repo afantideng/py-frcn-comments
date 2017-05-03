@@ -48,13 +48,13 @@ class ROIPoolingLayer : public Layer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
-  int channels_;
-  int height_;
+  int channels_; // 池化前和池化后特征图的通道数(二者一致)
+  int height_;   
   int width_;
   int pooled_height_;
   int pooled_width_;
-  Dtype spatial_scale_;
-  Blob<int> max_idx_;
+  Dtype spatial_scale_; // 池化前特征图和原特征图的缩放尺度(1/stride)
+  Blob<int> max_idx_;   // 存放池化后特征图上每一点的取值在输入特征图上的位置
 };
 
 template <typename Dtype>

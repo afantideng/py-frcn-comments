@@ -24,9 +24,10 @@ void ROIPoolingLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       << "pooled_h must be > 0";
   CHECK_GT(roi_pool_param.pooled_w(), 0)
       << "pooled_w must be > 0";
-  //pooling 以后的 宽 (width) 和 高 (height)
+  // pooling 以后的 宽 (width) 和 高 (height)
   pooled_height_ = roi_pool_param.pooled_h();                       
   pooled_width_ = roi_pool_param.pooled_w();
+  // 输入特征图相对于原图的尺寸变换 (1/stride)
   spatial_scale_ = roi_pool_param.spatial_scale();
   LOG(INFO) << "Spatial scale: " << spatial_scale_;
 }
@@ -40,6 +41,7 @@ void ROIPoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   width_ = bottom[0]->width();
 
   // top[0]的结构: (roi_num, c, pooled_h, pooled_w)
+  // 注意：输出通道个数 channels_ 和输入 bottom[0] 通道数相同
   top[0]->Reshape(bottom[1]->num(), channels_, pooled_height_,
       pooled_width_);
   // 存放 pooling 后各个点在原特征图中的坐标值
