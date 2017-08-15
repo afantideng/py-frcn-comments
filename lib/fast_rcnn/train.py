@@ -18,7 +18,7 @@ import os
 from caffe.proto import caffe_pb2
 import google.protobuf as pb2
 
-class SolverWrapper(object):                                                #控制solver
+class SolverWrapper(object):                                                # 控制solver
     """A simple wrapper around Caffe's solver.
     This wrapper gives us control over he snapshotting process, which we
     use to unnormalize the learned bounding-box regression weights.

@@ -27,6 +27,7 @@ class RoIDataLayer(caffe.Layer):
     """
     def _shuffle_roidb_inds(self):
         """Randomly permute the training roidb."""
+        # 把aspect差不多的放在一起搞
         if cfg.TRAIN.ASPECT_GROUPING:
             widths = np.array([r['width'] for r in self._roidb])
             heights = np.array([r['height'] for r in self._roidb])
@@ -121,52 +122,53 @@ class RoIDataLayer(caffe.Layer):
             top[idx].reshape(1, 4)
             self._name_to_top_map['gt_boxes'] = idx                  # top[2] 存放 gt_boxes
             idx += 1
-        else: #如果不使用RPN (在分步训练时会用到)
+        #如果不使用RPN (在分步训练时会用到)
+        else: 
             # rois blob: holds R regions of interest, each is a 5-tuple
             # (n, x1, y1, x2, y2) specifying an image batch index n and a
             # rectangle (x1, y1, x2, y2)
-            top[idx].reshape(1, 5)                                    #top[1]存放roi(5个元素的tuple)
+            top[idx].reshape(1, 5)                                    # top[1]存放roi(5个元素的tuple)
             self._name_to_top_map['rois'] = idx
             idx += 1
 
             # labels blob: R categorical labels in [0, ..., K] for K foreground
             # classes plus background
-            top[idx].reshape(1)                                        #top[2]存放labels
+            top[idx].reshape(1)                                        # top[2]存放labels
             self._name_to_top_map['labels'] = idx
             idx += 1
 
             if cfg.TRAIN.BBOX_REG:
                 # bbox_targets blob: R bounding-box regression targets with 4
                 # targets per class
-                top[idx].reshape(1, self._num_classes * 4)             #top[3]存放bbox
+                top[idx].reshape(1, self._num_classes * 4)             # top[3]存放bbox
                 self._name_to_top_map['bbox_targets'] = idx
                 idx += 1
 
                 # bbox_inside_weights blob: At most 4 targets per roi are active;
                 # thisbinary vector sepcifies the subset of active targets
-                top[idx].reshape(1, self._num_classes * 4)             #top[4]存放bbox_inside_weights
+                top[idx].reshape(1, self._num_classes * 4)             # top[4]存放bbox_inside_weights
                 self._name_to_top_map['bbox_inside_weights'] = idx
                 idx += 1
 
-                top[idx].reshape(1, self._num_classes * 4)             #top[5]存放bbox_outside_weights
+                top[idx].reshape(1, self._num_classes * 4)             # top[5]存放bbox_outside_weights
                 self._name_to_top_map['bbox_outside_weights'] = idx
                 idx += 1
 
         print 'RoiDataLayer: name_to_top:', self._name_to_top_map
-        assert len(top) == len(self._name_to_top_map)                  #top和_name_to_top_map的长度要保持一致
+        assert len(top) == len(self._name_to_top_map)                  # top和_name_to_top_map的长度要保持一致
 
     def forward(self, bottom, top):
         """
         Get blobs and copy them into this layer's top blob vector.
         获取blob并将其载入top
-        blobs 为一个字典，包含一张图片的信息，字典的键值有：
+        blobs 为一个字典，包含一张图片的信息，字典的键值(key)有：
            im_blob： (1, c(3), h, w)
            gt_boxes：(gt_num, 5) 包含坐标和类别标签
            im_info: (1, 3) 包含这张图片的 w, h, scale
         """
         blobs = self._get_next_minibatch()                             # 获得下一个mini_batch的blobs
 
-        # ---- 把 blobs 中的 im_blob, im_info 和 gt_box 装载到 top 里进行输出 ----
+        # ---- 把 blobs 中的 im_blob, im_info 和 gt_box 装载到 top (top[0],top[1],top[2]) 里进行输出 ----
         for blob_name, blob in blobs.iteritems():
             top_ind = self._name_to_top_map[blob_name]
             # Reshape net's input blobs

@@ -62,7 +62,7 @@ def _get_image_blob(im):
 
     return blob, np.array(im_scale_factors)
 
-# --- 没啥用 ---
+
 def _get_rois_blob(im_rois, im_scale_factors):
     """Converts RoIs into network inputs.
 
@@ -77,7 +77,7 @@ def _get_rois_blob(im_rois, im_scale_factors):
     rois_blob = np.hstack((levels, rois))
     return rois_blob.astype(np.float32, copy=False)
 
-# --- 没啥用 ---
+
 def _project_im_rois(im_rois, scales):
     """Project image RoIs into the image pyramid built by _get_image_blob.
 
@@ -187,7 +187,9 @@ def im_detect(net, im, boxes=None):
         # Apply bounding-box regression deltas
         box_deltas = blobs_out['bbox_pred']
         '''通过 anchors(这里是整个网络第二次回归，所示anchor用roi替代) 和
-            RPN 给出的 bbox_deltas 得到最终的 proposals (论文3.1.2)'''
+            RPN 给出的 bbox_deltas 得到最终的 proposals (论文3.1.2)
+            注意: 这里也包含一个从(ctr_x, ctr_y, h, w) 到 (x1,y1,x2,y2) 的变换
+        '''
         pred_boxes = bbox_transform_inv(boxes, box_deltas)
         # 避免区域越界
         pred_boxes = clip_boxes(pred_boxes, im.shape)

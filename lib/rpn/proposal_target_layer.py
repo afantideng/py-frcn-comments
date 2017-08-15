@@ -90,7 +90,7 @@ class ProposalTargetLayer(caffe.Layer):
         top[1].reshape(*labels.shape)
         top[1].data[...] = labels
 
-        # bbox_targets
+        # bbox_targets   结构: [N, (4 * num_classes)]
         top[2].reshape(*bbox_targets.shape)
         top[2].data[...] = bbox_targets
 
@@ -169,17 +169,17 @@ def _sample_rois(all_rois, gt_boxes, fg_rois_per_image, rois_per_image, num_clas
 
 
     # Select foreground RoIs as those with >= FG_THRESH overlap
-    fg_inds = np.where(max_overlaps >= cfg.TRAIN.FG_THRESH)[0]           #根据最大重叠值的阈值选出属于前景的roi
+    fg_inds = np.where(max_overlaps >= cfg.TRAIN.FG_THRESH)[0]           # 根据最大重叠值的阈值选出属于前景的roi
     # Guard against the case when an image has fewer than fg_rois_per_image
     # foreground RoIs
     fg_rois_per_this_image = min(fg_rois_per_image, fg_inds.size)
     # Sample foreground regions without replacement
-    if fg_inds.size > 0:                                                 #如果规定的前景数小于符合要求的前景数，则随机抽取
+    if fg_inds.size > 0:                                                 # 如果规定的前景数小于符合要求的前景数，则随机抽取
         fg_inds = npr.choice(fg_inds, size=fg_rois_per_this_image, replace=False)
 
 
     # Select background RoIs as those within [BG_THRESH_LO, BG_THRESH_HI)
-    bg_inds = np.where((max_overlaps < cfg.TRAIN.BG_THRESH_HI) &         #根据最大重叠值的阈值选出属于背景的roi
+    bg_inds = np.where((max_overlaps < cfg.TRAIN.BG_THRESH_HI) &         # 根据最大重叠值的阈值选出属于背景的roi
                        (max_overlaps >= cfg.TRAIN.BG_THRESH_LO))[0]
     # Compute number of background RoIs to take from this image (guarding
     # against there being fewer than desired)
@@ -187,22 +187,22 @@ def _sample_rois(all_rois, gt_boxes, fg_rois_per_image, rois_per_image, num_clas
     bg_rois_per_this_image = min(bg_rois_per_this_image, bg_inds.size)
     # Sample background regions without replacement
 
-    if bg_inds.size > 0:                                                 #如果规定的背景数小于符合要求的背景数，则随机抽取
+    if bg_inds.size > 0:                                                 # 如果规定的背景数小于符合要求的背景数，则随机抽取
         bg_inds = npr.choice(bg_inds, size=bg_rois_per_this_image, replace=False)
 
     # The indices that we're selecting (both fg and bg)
-    keep_inds = np.append(fg_inds, bg_inds)                    #把最终取用的前景和背景roi串起来(一行max_overlap中的序号)
+    keep_inds = np.append(fg_inds, bg_inds)                    # 把最终取用的前景和背景roi串起来(一行max_overlap中的序号)
     # Select sampled values from various arrays:
     labels = labels[keep_inds]
     # Clamp labels for the background RoIs to 0
-    labels[fg_rois_per_this_image:] = 0                        #将背景的标签全部置为零（前景和背景的label是直接append起来的）
-    rois = all_rois[keep_inds]                                 #取出最终采纳的rois
+    labels[fg_rois_per_this_image:] = 0                        # 将背景的标签全部置为零（前景和背景的label是直接append起来的）
+    rois = all_rois[keep_inds]                                 # 取出最终采纳的rois
 
     """---论文3.1.2节中所作的变换---"""
     bbox_target_data = _compute_targets(                                #结构为:(label,tx,ty,tw,th)
         rois[:, 1:5], gt_boxes[gt_assignment[keep_inds], :4], labels)
     """
-    将N*5格式变换为N*4K格式[rois*(4*num_classes)]
+    将N*5格式变换为N*4K格式[rois, (4*num_classes)]
     搞成 "4-of-4*K representation"
     """
     bbox_targets, bbox_inside_weights = \

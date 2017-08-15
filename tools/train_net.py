@@ -83,7 +83,7 @@ if __name__ == '__main__':
     print('Called with args:')
     print(args)
 
-    if args.cfg_file is not None:                            #读取yaml文件并设置config.py的各种参数
+    if args.cfg_file is not None:                            # 读取yaml文件并设置config.py的各种参数
         cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
@@ -109,7 +109,7 @@ if __name__ == '__main__':
        'gt_classes': gt_classes,    (num_objs, 1)
        'gt_overlaps' : overlaps,    (num_objs, num_class)
        'flipped' : False,
-       'seg_areas' : seg_areas     (num_objs, 1)
+       'seg_areas' : seg_areas      (num_objs, 1)
        'width'
        'height'
        'max_classes'                (1, num_objs) 　

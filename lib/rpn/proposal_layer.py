@@ -78,11 +78,11 @@ class ProposalLayer(caffe.Layer):
 
         # the first set of _num_anchors channels are bg probs
         # the second set are the fg probs, which we want
-        scores = bottom[0].data[:, self._num_anchors:, :, :]  #RPN给出的cls_score信息(严格地说是rpn_cls_prob_reshape),前_num_anchors个是背景，之后为前景（物体）
+        scores = bottom[0].data[:, self._num_anchors:, :, :]  # RPN给出的cls_score信息(严格地说是rpn_cls_prob_reshape),前_num_anchors个是背景，之后为前景（物体）
 
-        bbox_deltas = bottom[1].data                          #RPN给出的bbox_pred信息,bbox_deltas就是论文3.1.2节中的't'
+        bbox_deltas = bottom[1].data                          # RPN给出的bbox_pred信息,bbox_deltas就是论文3.1.2节中的't'
 
-        im_info = bottom[2].data[0, :]                        #im_info装的是宽,高和缩放尺度信息
+        im_info = bottom[2].data[0, :]                        # im_info装的是宽,高和缩放尺度信息
 
         if DEBUG:
             print 'im_size: ({}, {})'.format(im_info[0], im_info[1])

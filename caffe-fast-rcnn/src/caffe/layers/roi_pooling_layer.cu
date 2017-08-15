@@ -22,7 +22,7 @@ __global__ void ROIPoolForward(const int nthreads, const Dtype* bottom_data,
   // 注意：index 是池化后各个点的索引,对所有 index 进行循环
   CUDA_KERNEL_LOOP(index, nthreads) {
     // (n, c, ph, pw) is an element in the pooled output
-    // (n, c, ph, pw) 是在池化后特征图中的索引
+    // (n, c, ph, pw) 是 index 在池化后特征图中的位置
     int pw = index % pooled_width;
     int ph = (index / pooled_width) % pooled_height;
     int c = (index / pooled_width / pooled_height) % channels;
@@ -39,13 +39,14 @@ __global__ void ROIPoolForward(const int nthreads, const Dtype* bottom_data,
     int roi_width = max(roi_end_w - roi_start_w + 1, 1);
     int roi_height = max(roi_end_h - roi_start_h + 1, 1);
 
-    // 池化时每一个 bin 在原特征图的尺寸
+    // 池化后特征图的每一个点在原特征图对应的尺寸
     Dtype bin_size_h = static_cast<Dtype>(roi_height)
                        / static_cast<Dtype>(pooled_height);
     Dtype bin_size_w = static_cast<Dtype>(roi_width)
                        / static_cast<Dtype>(pooled_width);
 
-    // 获得宽和高的起始和结束索引值
+    // 获得当前index所对应的 RoI 的宽和高在池化前特征图上的起始和结束索引值
+    // 注意：此处有取整操作,是ROI Pooling 的特点
     int hstart = static_cast<int>(floor(static_cast<Dtype>(ph)
                                         * bin_size_h));
     int wstart = static_cast<int>(floor(static_cast<Dtype>(pw)
@@ -56,7 +57,7 @@ __global__ void ROIPoolForward(const int nthreads, const Dtype* bottom_data,
                                      * bin_size_w));
 
     // Add roi offsets and clip to input boundaries
-    // 保证在特征图边缘以内
+    // 保证RoI在池化前特征图边缘以内
     hstart = min(max(hstart + roi_start_h, 0), height);
     hend = min(max(hend + roi_start_h, 0), height);
     wstart = min(max(wstart + roi_start_w, 0), width);
@@ -131,6 +132,7 @@ __global__ void ROIPoolBackward(const int nthreads, const Dtype* top_diff,
         continue;
       }
 
+      // 计算当前roi在池化前特征图上的位置(整数，取整量化)
       // 由于传入的roi信息是输入图片中的坐标, 所以要乘以 spatial_scale 才能够映射到池化前特征图上 
       int roi_start_w = round(offset_bottom_rois[1] * spatial_scale);
       int roi_start_h = round(offset_bottom_rois[2] * spatial_scale);
@@ -154,22 +156,22 @@ __global__ void ROIPoolBackward(const int nthreads, const Dtype* top_diff,
       // Compute feasible set of pooled units that could have pooled
       // this bottom unit
 
+      // 当前ROI在池化前特征图上的宽和高
       // Force malformed ROIs to be 1x1
       int roi_width = max(roi_end_w - roi_start_w + 1, 1);
       int roi_height = max(roi_end_h - roi_start_h + 1, 1);
 
-      // 计算出池化后特征图上每一个点在池化前特征图上对应区域(bin)的尺寸
+      // 池化后特征图上每一个点在池化前特征图上对应区域(bin)的尺寸
       Dtype bin_size_h = static_cast<Dtype>(roi_height)
                          / static_cast<Dtype>(pooled_height);
       Dtype bin_size_w = static_cast<Dtype>(roi_width)
                          / static_cast<Dtype>(pooled_width);
 
-      // 其实 start 和 end 之间大概就一个点
+      // 当前坐标点 (h,w) 在池化后特征图中所处的位置（事实上 start 和 end 是同一个点）
       int phstart = floor(static_cast<Dtype>(h - roi_start_h) / bin_size_h);
       int phend = ceil(static_cast<Dtype>(h - roi_start_h + 1) / bin_size_h);
       int pwstart = floor(static_cast<Dtype>(w - roi_start_w) / bin_size_w);
       int pwend = ceil(static_cast<Dtype>(w - roi_start_w + 1) / bin_size_w);
-
       phstart = min(max(phstart, 0), pooled_height);
       phend = min(max(phend, 0), pooled_height);
       pwstart = min(max(pwstart, 0), pooled_width);

@@ -176,7 +176,7 @@ class AnchorTargetLayer(caffe.Layer):
 
         if cfg.TRAIN.RPN_CLOBBER_POSITIVES:
             # assign bg labels last so that negative labels can clobber positives
-            labels[max_overlaps < cfg.TRAIN.RPN_NEGATIVE_OVERLAP] = 0          # 对每一个anchor,IOU<0.3 标为负样本
+            labels[max_overlaps < cfg.TRAIN.RPN_NEGATIVE_OVERLAP] = 0          # 对每一个anchor,IOU < 0.3 标为负样本
                                                                                # (再来一次是为了覆盖前两步)
 
         # subsample positive labels if we have too many                        #下采样以保持正负样本均衡

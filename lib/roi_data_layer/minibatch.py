@@ -48,7 +48,7 @@ def get_minibatch(roidb, num_classes):
     """
     blobs = {'data': im_blob}
 
-    # ----- 以下部分严格要求输入图片张数为 "1" -----
+    # 以下部分严格要求输入图片张数为 "1" 
     if cfg.TRAIN.HAS_RPN:
         assert len(im_scales) == 1, "Single batch only"
         assert len(roidb) == 1, "Single batch only"
@@ -62,13 +62,14 @@ def get_minibatch(roidb, num_classes):
 
         # 坐标值乘上缩放尺寸后放入 gt_box 中
         gt_boxes[:, 0:4] = roidb[0]['boxes'][gt_inds, :] * im_scales[0]
+        
         # 放入类别标签
         gt_boxes[:, 4] = roidb[0]['gt_classes'][gt_inds]
 
         # 将 gt_boxes 装入 blobs 中
         blobs['gt_boxes'] = gt_boxes
 
-        #
+        # 将缩放后的图片宽和高以及缩放尺度放入 blobs 中
         blobs['im_info'] = np.array(
             [[im_blob.shape[2], im_blob.shape[3], im_scales[0]]],
             dtype=np.float32)
